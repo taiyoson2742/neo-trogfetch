@@ -89,7 +89,7 @@ then
 		echo -e 'Free\t| '"${free}B"
 	done
 fi
-ech
+echo
 echo "${bold}${green}---- Network ----${normal}"
 echo -e 'IPv4\t| ' $(hostname -i  | cut -d " " -f3)
 echo -e 'IPv6\t| ' $(hostname -i  | cut -d " " -f3)
