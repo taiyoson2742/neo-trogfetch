@@ -1,0 +1,96 @@
+#Copyright Taiyo Hamburg 10.21.26
+#!/usr/bin/bash
+#Figure out how the ascii thing works...
+
+#fancy text initialization
+bold=$(tput bold)
+normal=$(tput sgr0)
+magenta=$(tput setaf 5)
+orange=$(tput setaf 202)
+yellow=$(tput setaf 11)
+pink=$(tput setaf 206)
+lightblue=$(tput setaf 33)
+green=$(tput setaf 2)
+
+
+arch=$(lscpu | grep -w "Architecture:" | cut -c14-)
+
+if [ $arch = aarch64 ]; then
+	#echo "arm path"
+	threads=$(lscpu | grep -w "Thread(s) per core:" | cut -c20-)
+	cpc=$(lscpu | grep -w "Core(s) per cluster:" | cut -c21- | tr -d [:blank:])
+	clusters=$(lscpu | grep -w "Cluster(s):" | cut -c12- | tr -d [:blank:])
+	model=$(lscpu | grep -w "Model name:" | cut -c12- | grep 'w/' | cut -d "/" -f2)
+	cores=$(($cpc*$clusters))
+	mobo=$(cat /sys/firmware/devicetree/base/model)
+
+else
+	#echo "default path"
+	threads=$(lscpu | grep -w "Thread(s) per core:" | cut -c20-)
+	cores=$(lscpu | grep -w "Core(s) per socket:" | cut -c20-)
+	model=$(lscpu | grep -w "Model name:" | cut -c12- | grep 'w/' | cut -d "/" -f2)
+	mobo=$(cat /sys/devices/virtual/dmi/id/board_{vendor,name,version})
+
+fi
+
+#the part that actually displays the info
+echo
+echo "${bold}${magenta}---- General ----${normal}"
+echo -e 'Name\t| ' $(hostname)
+echo -e 'Distro\t| ' $(grep -w 'PRETTY_NAME=' /etc/os-release | cut -c13- | tr -d '""' )
+echo -e 'Kernal\t| ' $(uname -rs)
+echo -e 'Uptime\t| ' $(uptime -p | cut -c3-)
+echo -e 'Mboard\t| ' $mobo
+
+echo
+echo -e "${bold}${orange}---- CPU ----${normal}"
+echo -e 'Model\t| ' $(lscpu | grep -w "Model name:" | cut -c12-)
+echo -e 'Brand\t| ' $(lscpu | grep -w "Vendor ID:" | cut -c11-)
+echo -e 'Arch\t| ' $arch
+echo -e 'Mode(s)\t| ' $(lscpu | grep -w "CPU op-mode(s):" | cut -c16-)
+echo -e 'Speed\t| ' $(lscpu | grep -w "CPU max MHz" | cut -c13- | cut -d "." -f1)"MHz"
+echo -e 'Cores\t| ' $cores
+echo -e 'Threads\t| ' $(($threads*$cores)) 
+echo
+echo "${bold}${yellow}---- GPU ----${normal}"
+
+if [ $(echo $model | wc -c) -gt 1 ]; then 
+	echo -e 'GPU\t| ' $model
+	echo -e 'Brand\t| ' $(lspci -m | grep "VGA" | cut -d '"' -f8 | cut -d '/' -f2)
+	echo
+else
+	echo -e 'GPU(s)\t| ' $(lspci -m | grep 'VGA' | cut -d '"' -f6 | cut -d "[" -f2 | tr -d "]")
+	echo -e 'Brand\t| ' $(lspci -m | grep "VGA" | cut -d '"' -f8 | cut -d '/' -f2)
+	echo
+fi
+
+echo "${bold}${pink}---- RAM ----${normal}"
+echo -e 'Memory\t| ' $(free -h | grep "Mem:" | cut -c5- | tr -s [:blank:] | tr ' ' ':'  | cut -d ':' -f2)"B"
+echo -e 'Used\t| ' $(free -h | grep "Mem:" | cut -c5- | tr -s [:blank:] | tr ' ' ':'  | cut -d ':' -f3)"B"
+echo -e 'Free\t| ' $(free -h | grep "Mem:" | cut -c5- | tr -s [:blank:] | tr ' ' ':'  | cut -d ':' -f4)"B"
+echo
+echo "${bold}${lightblue}---- Swap ----${normal}"
+echo -e 'Swap\t| ' $(free -h | grep "Swap:" | cut -c6- | tr -s [:blank:] | tr ' ' ':'  | cut -d ':' -f2)"B"
+echo -e 'Free\t| ' $(free -h | grep "Swap:" | cut -c6- | tr -s [:blank:] | tr ' ' ':'  | cut -d ':' -f4)"B"
+echo
+
+if [ "$(uname -s)" = "Linux" ];
+then
+	echo "${bold}${lightblue}---- Disk(s) ----${normal}"
+	df -h --output=target,size,used,avail -x tmpfs -x devtmpfs -x squashfs -x overlay -x efivarfs |  tail -n +2 | grep -v '^/boot' |
+	while read -r mount total used free
+	do
+		if [ "mount" != "/" ]
+		then
+			echo "${bold}${lightblue}${mount}${normal}"
+		fi
+		echo -e 'Total\t| '"${total}B"
+		echo -e 'Used\t| '"${used}B"
+		echo -e 'Free\t| '"${free}B"
+	done
+fi
+echo
+echo "${bold}${green}---- Network ----${normal}"
+echo -e 'IPv4\t| ' $(hostname -i  | cut -d " " -f3)
+echo -e 'IPv6\t| ' $(hostname -i  | cut -d " " -f3)
+echo
