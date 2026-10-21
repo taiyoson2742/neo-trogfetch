@@ -1,2 +1,13 @@
 # neo-trogfetch
-A simple but detailed neofetch clone written in bash. (previously a fork but is now a repo)
+A simple but detailed neofetch clone written in bash.
+Notable features include extra details regarding the motherboard and CPU. <br>
+
+To use, simply open the file in your terminal, type `chmod +x neo-trogfetch` then run with `./neo-trogfetch`. Simple right? <br>
+**Example Images** <br>
+<img width="455" height="698" alt="kubuntu" src="https://github.com/user-attachments/assets/9c8eae01-8826-4f9a-a2c4-e773615fa88b" />
+<img width="677" height="1128" alt="fedora" src="https://github.com/user-attachments/assets/9ad0d71c-a3b9-42ad-8b29-4470f48c7029" />
+
+
+
+Just use mfetch if you want something in bash that is actually lightweight AND customizable: https://github.com/Nighty3098/mfetch <br>
+This project aims to continue developing the now abandoned trogfetch; https://github.com/jfish871/trogfetch
