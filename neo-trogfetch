@@ -91,6 +91,8 @@ then
 fi
 echo
 echo "${bold}${green}---- Network ----${normal}"
-echo -e 'IPv4\t| ' $(hostname -i  | cut -d " " -f3)
-echo -e 'IPv6\t| ' $(hostname -i  | cut -d " " -f3)
+ipv4=$(ip -4 -o addr show scope global | awk '{print $4}'
+ipv6=$(ip -6 -o addr show scope global | awk '{print $4}'
+echo -e 'IPv4\t| ' "${ipv4:-none}"
+echo -e 'IPv6\t| ' "${ipv6:-none}"
 echo
