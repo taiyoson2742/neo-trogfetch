@@ -91,8 +91,8 @@ then
 fi
 echo
 echo "${bold}${green}---- Network ----${normal}"
-ipv4=$(ip -4 -o addr show scope global | awk '{print $4}'
-ipv6=$(ip -6 -o addr show scope global | awk '{print $4}'
+ipv4=$(ip -4 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | paste -sd '. ' -)
+ipv6=$(ip -6 -o addr show scope global | awk '{print $4}' | cut -d/ -f1 | paste -sd '. ' -)
 echo -e 'IPv4\t| ' "${ipv4:-none}"
 echo -e 'IPv6\t| ' "${ipv6:-none}"
 echo
