@@ -6,6 +6,7 @@ To use, simply open the file in your terminal, type `chmod +x neo-trogfetch` the
 **Example Images** <br>
 <img width="455" height="698" alt="kubuntu" src="https://github.com/user-attachments/assets/9c8eae01-8826-4f9a-a2c4-e773615fa88b" />
 <img width="677" height="1128" alt="fedora" src="https://github.com/user-attachments/assets/9ad0d71c-a3b9-42ad-8b29-4470f48c7029" />
+<img width="808" height="1019" alt="image" src="https://github.com/user-attachments/assets/15daf46d-eee0-48e7-a238-2b5c0c25e678" />
 
 
 
