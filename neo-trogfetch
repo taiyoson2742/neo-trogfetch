@@ -12,6 +12,24 @@ pink=$(tput setaf 206)
 lightblue=$(tput setaf 33)
 green=$(tput setaf 2)
 
+#function to get uptime, uptime -p doesnt work on vms
+get_uptime(){
+	if[ -r /proc/uptime ]; then
+		secs=$(cut -d. -f1 /proc/uptime)
+	else
+	    echo "unknown"
+	    return
+	fi
+	
+	d=$((secs / 86400))
+	h=$((secs % 86400 / 3600))
+	m=$((secs % 3600 / 60))
+	
+	out=""
+	[ "$d" -gt 0 ] && out="${d}d "
+	[ "$h" -gt 0 ] && out="${out}${h}h "
+	echo "${out}${m}m"
+}
 
 arch=$(lscpu | grep -w "Architecture:" | cut -c14-)
 
@@ -39,7 +57,7 @@ echo "${bold}${magenta}---- General ----${normal}"
 echo -e 'Name\t| ' $(uname -n)
 echo -e 'Distro\t| ' $(grep -w 'PRETTY_NAME=' /etc/os-release | cut -c13- | tr -d '""' )
 echo -e 'Kernal\t| ' $(uname -rs)
-echo -e 'Uptime\t| ' $(uptime -p | cut -c3-)
+echo -e 'Uptime\t| ' "$(get_uptime)"
 echo -e 'Mboard\t| ' $mobo
 
 echo
