@@ -36,7 +36,7 @@ fi
 #the part that actually displays the info
 echo
 echo "${bold}${magenta}---- General ----${normal}"
-echo -e 'Name\t| ' $(hostname)
+echo -e 'Name\t| ' $(uname -n)
 echo -e 'Distro\t| ' $(grep -w 'PRETTY_NAME=' /etc/os-release | cut -c13- | tr -d '""' )
 echo -e 'Kernal\t| ' $(uname -rs)
 echo -e 'Uptime\t| ' $(uptime -p | cut -c3-)
