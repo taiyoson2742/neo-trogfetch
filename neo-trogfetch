@@ -1,5 +1,5 @@
+#!/usr/bin/env bash
 #Copyright Taiyo Hamburg 10.21.26
-#!/usr/bin/bash
 #Figure out how the ascii thing works...
 
 #fancy text initialization
@@ -30,6 +30,19 @@ get_uptime(){
 	[ "$h" -gt 0 ] && out="${out}${h}h "
 	echo "${out}${m}m"
 }
+#maps pci vendor if to a name when lspci is not installed (like on nix)
+vendor_name(){
+	case "$1" in
+		0x10de) echo "NVIDIA" ;;
+		0x1002|0x1022) echo "AMD" ;;
+		0x8086) echo "Intel" ;;
+		0x1af4) echo "Red Hat (virtio)" ;;
+		0x15ad) echo "VMware" ;;
+		0x80ee) echo "Oracle (VirtualBox)" ;;
+		0x1234) echo "QEMU" ;;
+		*) echo "$1" ;;
+	esac
+}
 
 arch=$(lscpu | grep -w "Architecture:" | cut -c14-)
 
@@ -40,14 +53,14 @@ if [ $arch = aarch64 ]; then
 	clusters=$(lscpu | grep -w "Cluster(s):" | cut -c12- | tr -d [:blank:])
 	model=$(lscpu | grep -w "Model name:" | cut -c12- | grep 'w/' | cut -d "/" -f2)
 	cores=$(($cpc*$clusters))
-	mobo=$(cat /sys/firmware/devicetree/base/model)
+	mobo=$(tr -d '\0' < /sys/firmware/devicetree/base/model 2>/dev/null)
 
 else
 	#echo "default path"
 	threads=$(lscpu | grep -w "Thread(s) per core:" | cut -c20-)
 	cores=$(lscpu | grep -w "Core(s) per socket:" | cut -c20-)
 	model=$(lscpu | grep -w "Model name:" | cut -c12- | grep 'w/' | cut -d "/" -f2)
-	mobo=$(cat /sys/devices/virtual/dmi/id/board_{vendor,name,version})
+	mobo=$(cat /sys/devices/virtual/dmi/id/board_{vendor,name,version} 2>/dev/null)
 
 fi
 
@@ -72,14 +85,24 @@ echo -e 'Threads\t| ' $(($threads*$cores))
 echo
 echo "${bold}${yellow}---- GPU ----${normal}"
 
-if [ $(echo $model | wc -c) -gt 1 ]; then 
-	echo -e 'GPU\t| ' $model
-	echo -e 'Brand\t| ' $(lspci -m | grep "VGA" | cut -d '"' -f8 | cut -d '/' -f2)
-	echo
+if command -v lspci >/dev/null 2>&1; then
+	gpu_brand=$(lspci -m | grep "VGA" | cut -d '"' -f8 | cut -d '/' -f2)
+	if [ -n "$model" ]; then
+		gpu_name=$model
+	else
+		gpu_name=$(lspci -m | grep 'VGA' | cut -d '"' -f6 | cut -d "[" -f2 | tr -d "]")
+	fi
 else
-	echo -e 'GPU(s)\t| ' $(lspci -m | grep 'VGA' | cut -d '"' -f6 | cut -d "[" -f2 | tr -d "]")
-	echo -e 'Brand\t| ' $(lspci -m | grep "VGA" | cut -d '"' -f8 | cut -d '/' -f2)
-	echo
+	#no lspci (e.g. NixOS without pciutils), fall back to sysfs.
+	#this only gives vendor + PCI device id, not the marketing name.
+	gpu_brand=""
+	gpu_name=""
+	for d in /sys/class/drm/card*/device; do
+		[ -r "$d/vendor" ] || continue
+		gpu_brand="$gpu_brand $(vendor_name "$(cat "$d/vendor")")"
+		gpu_name="$gpu_name PCI:$(cat "$d/device" 2>/dev/null)"
+	done
+	[ -n "$model" ] && gpu_name=$model
 fi
 
 echo "${bold}${pink}---- RAM ----${normal}"
@@ -95,13 +118,11 @@ echo
 if [ "$(uname -s)" = "Linux" ];
 then
 	echo "${bold}${lightblue}---- Disk(s) ----${normal}"
-	df -h --output=target,size,used,avail -x tmpfs -x devtmpfs -x squashfs -x overlay -x efivarfs |  tail -n +2 | grep -v '^/boot' |
+	df -h --output=target,size,used,avail -x tmpfs -x devtmpfs -x squashfs -x overlay -x efivarfs |  tail -n +2 | grep -Ev '^/(boot|nix/store)' |
 	while read -r mount total used free
 	do
-		if [ "mount" != "/" ]
-		then
-			echo "${bold}${lightblue}${mount}${normal}"
-		fi
+
+		echo "${bold}${lightblue}${mount}${normal}"
 		echo -e 'Total\t| '"${total}B"
 		echo -e 'Used\t| '"${used}B"
 		echo -e 'Free\t| '"${free}B"
