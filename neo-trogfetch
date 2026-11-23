@@ -105,6 +105,9 @@ else
 	[ -n "$model" ] && gpu_name=$model
 fi
 
+echo -e 'GPU(s)\t| ' ${gpu_name:-unknown}
+echo -e 'Brand\t| ' ${gpu_brand:-unknown}
+echo
 echo "${bold}${pink}---- RAM ----${normal}"
 echo -e 'Memory\t| ' $(free -h | grep "Mem:" | cut -c5- | tr -s [:blank:] | tr ' ' ':'  | cut -d ':' -f2)"B"
 echo -e 'Used\t| ' $(free -h | grep "Mem:" | cut -c5- | tr -s [:blank:] | tr ' ' ':'  | cut -d ':' -f3)"B"
